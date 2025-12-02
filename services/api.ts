@@ -14,9 +14,14 @@ const api = axios.create({
 
 // Auth API
 export const login = async (phoneNumber: string): Promise<LoginResponse> => {
-    const request: LoginRequest = { phone_number: phoneNumber };
-    const response = await api.post<LoginResponse>('/auth/login', request);
-    return response.data;
+    try {
+        const request: LoginRequest = { phone_number: phoneNumber };
+        const response = await api.post<LoginResponse>('/auth/login', request);
+        return response.data;
+    } catch (error) {
+        console.error('Login failed:', error);
+        throw error;
+    }
 };
 
 export const verifyOTP = async (
