@@ -175,11 +175,11 @@ export default function GenerateChecklistScreen() {
                         </View>
 
                         {checklist.map((section, index) => (
-                            <View key={index} style={styles.section}>
+                            <View key={'generated-checklist-' + index} style={styles.section}>
                                 <Text style={styles.sectionHeading}>{section.heading}</Text>
                                 {section.items.map((item, itemIndex) => (
                                     <TouchableOpacity
-                                        key={itemIndex}
+                                        key={'generated-checklist-item-' + itemIndex}
                                         style={styles.item}
                                         onPress={() => toggleItem(index, itemIndex)}
                                     >

@@ -99,7 +99,7 @@ export default function SavedChecklistsScreen() {
                 ) : (
                     checklists.map((checklist, index) => (
                         <TouchableOpacity
-                            key={index}
+                            key={'saved-checklist-' + index}
                             style={styles.checklistCard}
                             onPress={() => {
                                 router.push({
@@ -129,13 +129,13 @@ export default function SavedChecklistsScreen() {
 
                             <View style={styles.cardContent}>
                                 {checklist.data.slice(0, 2).map((section, sectionIndex) => (
-                                    <View key={sectionIndex} style={styles.section}>
+                                    <View key={'saved-checklist-section-' + sectionIndex} style={styles.section}>
                                         <Text style={styles.sectionHeading}>{section.heading}</Text>
                                         {section.items.slice(0, 3).map((item, itemIndex) => {
                                             const text = typeof item === 'string' ? item : item.text;
                                             const isChecked = typeof item === 'string' ? false : item.checked;
                                             return (
-                                                <View key={itemIndex} style={styles.item}>
+                                                <View key={'saved-checklist-item-' + itemIndex} style={styles.item}>
                                                     <Ionicons
                                                         name={isChecked ? "checkmark-circle" : "ellipse-outline"}
                                                         size={16}
