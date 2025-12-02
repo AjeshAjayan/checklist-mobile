@@ -10,6 +10,7 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'accept': 'application/json',
     },
+    timeout: 50000
 });
 
 // Auth API
@@ -33,19 +34,40 @@ export const verifyOTP = async (
     return response.data;
 };
 
+interface ApiChecklistItem {
+    heading: string;
+    items: string[];
+}
+
+interface ApiChecklistResponse {
+    checklist: ApiChecklistItem[];
+}
+
 // Checklist API
 export const generateChecklist = async (
     prompt: string,
-    token: string
+    token: string,
+    signal?: AbortSignal
 ): Promise<ChecklistResponse> => {
-    const response = await api.post<ChecklistResponse>(
+    const response = await api.post<ApiChecklistResponse>(
         '/checklist/',
         { prompt },
         {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
+            signal,
         }
     );
-    return response.data;
+
+    // Transform the response to include checked state
+    const transformedChecklist = response.data.checklist.map(section => ({
+        heading: section.heading,
+        items: section.items.map(item => ({
+            text: item,
+            checked: false
+        }))
+    }));
+
+    return { checklist: transformedChecklist };
 };

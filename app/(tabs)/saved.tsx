@@ -98,7 +98,18 @@ export default function SavedChecklistsScreen() {
                     </View>
                 ) : (
                     checklists.map((checklist, index) => (
-                        <View key={index} style={styles.checklistCard}>
+                        <TouchableOpacity
+                            key={index}
+                            style={styles.checklistCard}
+                            onPress={() => {
+                                router.push({
+                                    pathname: '/(tabs)',
+                                    params: {
+                                        checklistData: JSON.stringify(checklist)
+                                    }
+                                });
+                            }}
+                        >
                             <View style={styles.cardHeader}>
                                 <View style={styles.cardTitleContainer}>
                                     <Ionicons name="bookmark" size={20} color="#007AFF" />
@@ -120,18 +131,28 @@ export default function SavedChecklistsScreen() {
                                 {checklist.data.slice(0, 2).map((section, sectionIndex) => (
                                     <View key={sectionIndex} style={styles.section}>
                                         <Text style={styles.sectionHeading}>{section.heading}</Text>
-                                        {section.items.slice(0, 3).map((item, itemIndex) => (
-                                            <View key={itemIndex} style={styles.item}>
-                                                <Ionicons
-                                                    name="checkmark-circle-outline"
-                                                    size={16}
-                                                    color="#007AFF"
-                                                />
-                                                <Text style={styles.itemText} numberOfLines={1}>
-                                                    {item}
-                                                </Text>
-                                            </View>
-                                        ))}
+                                        {section.items.slice(0, 3).map((item, itemIndex) => {
+                                            const text = typeof item === 'string' ? item : item.text;
+                                            const isChecked = typeof item === 'string' ? false : item.checked;
+                                            return (
+                                                <View key={itemIndex} style={styles.item}>
+                                                    <Ionicons
+                                                        name={isChecked ? "checkmark-circle" : "ellipse-outline"}
+                                                        size={16}
+                                                        color={isChecked ? "#999" : "#007AFF"}
+                                                    />
+                                                    <Text
+                                                        style={[
+                                                            styles.itemText,
+                                                            isChecked && styles.itemTextChecked
+                                                        ]}
+                                                        numberOfLines={1}
+                                                    >
+                                                        {text}
+                                                    </Text>
+                                                </View>
+                                            );
+                                        })}
                                         {section.items.length > 3 && (
                                             <Text style={styles.moreText}>
                                                 +{section.items.length - 3} more items
@@ -145,7 +166,7 @@ export default function SavedChecklistsScreen() {
                                     </Text>
                                 )}
                             </View>
-                        </View>
+                        </TouchableOpacity>
                     ))
                 )}
             </ScrollView>
@@ -249,6 +270,10 @@ const styles = StyleSheet.create({
         color: '#666',
         marginLeft: 6,
         flex: 1,
+    },
+    itemTextChecked: {
+        textDecorationLine: 'line-through',
+        color: '#999',
     },
     moreText: {
         fontSize: 12,

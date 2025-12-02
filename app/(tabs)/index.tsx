@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -22,6 +23,21 @@ export default function GenerateChecklistScreen() {
     const [checklist, setChecklist] = useState<ChecklistItem[] | null>(null);
     const [saving, setSaving] = useState(false);
 
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const params = useLocalSearchParams();
+
+    useEffect(() => {
+        if (params.checklistData) {
+            try {
+                const savedChecklist = JSON.parse(params.checklistData as string);
+                setPrompt(savedChecklist.title);
+                setChecklist(savedChecklist.data);
+            } catch (error) {
+                console.error('Error parsing checklist data:', error);
+            }
+        }
+    }, [params.checklistData]);
+
     const handleGenerate = async () => {
         if (!prompt.trim()) {
             Alert.alert('Empty Prompt', 'Please enter a prompt to generate a checklist');
@@ -31,6 +47,9 @@ export default function GenerateChecklistScreen() {
         setLoading(true);
         setChecklist(null);
 
+        // Create a new AbortController for this request
+        abortControllerRef.current = new AbortController();
+
         try {
             const token = await getToken();
             if (!token) {
@@ -38,15 +57,29 @@ export default function GenerateChecklistScreen() {
                 return;
             }
 
-            const response = await generateChecklist(prompt.trim(), token);
+            const response = await generateChecklist(prompt.trim(), token, abortControllerRef.current.signal);
             setChecklist(response.checklist);
         } catch (error: any) {
-            Alert.alert(
-                'Generation Failed',
-                error.response?.data?.detail || 'Failed to generate checklist. Please try again.'
-            );
+            // Don't show error if request was aborted
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('Request was canceled');
+            } else {
+                Alert.alert(
+                    'Generation Failed',
+                    error.response?.data?.detail || 'Failed to generate checklist. Please try again.'
+                );
+            }
         } finally {
             setLoading(false);
+            abortControllerRef.current = null;
+        }
+    };
+
+    const handleStop = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            setLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -69,6 +102,25 @@ export default function GenerateChecklistScreen() {
         setChecklist(null);
     };
 
+    const toggleItem = (sectionIndex: number, itemIndex: number) => {
+        if (!checklist) return;
+        const newChecklist = checklist.map((section, sIdx) => {
+            if (sIdx === sectionIndex) {
+                return {
+                    ...section,
+                    items: section.items.map((item, iIdx) => {
+                        if (iIdx === itemIndex) {
+                            return { ...item, checked: !item.checked };
+                        }
+                        return item;
+                    })
+                };
+            }
+            return section;
+        });
+        setChecklist(newChecklist);
+    };
+
     return (
         <KeyboardAvoidingView
             style={styles.container}
@@ -89,16 +141,18 @@ export default function GenerateChecklistScreen() {
                         multiline
                     />
                     <TouchableOpacity
-                        style={[styles.generateButton, loading && styles.buttonDisabled]}
-                        onPress={handleGenerate}
-                        disabled={loading}
+                        style={[styles.generateButton, loading && styles.stopButton]}
+                        onPress={loading ? handleStop : handleGenerate}
                     >
                         {loading ? (
-                            <ActivityIndicator color="#fff" />
+                            <>
+                                <Ionicons name="stop-circle" size={20} color="#fff" style={styles.buttonIcon} />
+                                <Text style={styles.generateButtonText}>Stop</Text>
+                            </>
                         ) : (
                             <>
                                 <Ionicons name="sparkles" size={20} color="#fff" style={styles.buttonIcon} />
-                                <Text style={styles.generateButtonText}>Generate Checklist</Text>
+                                <Text style={styles.generateButtonText}>Generate</Text>
                             </>
                         )}
                     </TouchableOpacity>
@@ -107,7 +161,7 @@ export default function GenerateChecklistScreen() {
                 {loading && (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#007AFF" />
-                        <Text style={styles.loadingText}>Generating your checklist...</Text>
+                        <Text style={styles.loadingText}>Thinking...</Text>
                     </View>
                 )}
 
@@ -124,10 +178,23 @@ export default function GenerateChecklistScreen() {
                             <View key={index} style={styles.section}>
                                 <Text style={styles.sectionHeading}>{section.heading}</Text>
                                 {section.items.map((item, itemIndex) => (
-                                    <View key={itemIndex} style={styles.item}>
-                                        <Ionicons name="checkmark-circle-outline" size={20} color="#007AFF" />
-                                        <Text style={styles.itemText}>{item}</Text>
-                                    </View>
+                                    <TouchableOpacity
+                                        key={itemIndex}
+                                        style={styles.item}
+                                        onPress={() => toggleItem(index, itemIndex)}
+                                    >
+                                        <Ionicons
+                                            name={item.checked ? "checkmark-circle" : "ellipse-outline"}
+                                            size={24}
+                                            color={item.checked ? "#999" : "#007AFF"}
+                                        />
+                                        <Text style={[
+                                            styles.itemText,
+                                            item.checked && styles.itemTextChecked
+                                        ]}>
+                                            {item.text}
+                                        </Text>
+                                    </TouchableOpacity>
                                 ))}
                             </View>
                         ))}
@@ -202,6 +269,9 @@ const styles = StyleSheet.create({
     buttonDisabled: {
         backgroundColor: '#ccc',
     },
+    stopButton: {
+        backgroundColor: '#FF3B30',
+    },
     buttonIcon: {
         marginRight: 8,
     },
@@ -265,6 +335,10 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         flex: 1,
         lineHeight: 22,
+    },
+    itemTextChecked: {
+        textDecorationLine: 'line-through',
+        color: '#999',
     },
     saveButton: {
         backgroundColor: '#34C759',

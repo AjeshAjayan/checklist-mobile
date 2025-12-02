@@ -2,7 +2,7 @@
 
 export interface ChecklistItem {
     heading: string;
-    items: string[];
+    items: { text: string; checked: boolean }[];
 }
 
 export interface ChecklistResponse {

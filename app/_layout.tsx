@@ -17,26 +17,6 @@ export default function RootLayout() {
         setIsAuthenticated(!!token);
     };
 
-    useEffect(() => {
-        if (isAuthenticated === null) return;
-
-        const inAuthGroup = segments[0] === '(tabs)';
-
-        if (isAuthenticated && !inAuthGroup) {
-            // User is authenticated but not in tabs, redirect to tabs
-            router.replace('/(tabs)');
-        } else if (!isAuthenticated && inAuthGroup) {
-            // User is not authenticated but in tabs, redirect to login
-            router.replace('/login');
-        } else if (!isAuthenticated) {
-            // User is not authenticated, ensure they're on login or verify-otp
-            const currentScreen = segments[0];
-            if (currentScreen !== 'login' && currentScreen !== 'verify-otp') {
-                router.replace('/login');
-            }
-        }
-    }, [isAuthenticated, segments]);
-
     if (isAuthenticated === null) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
