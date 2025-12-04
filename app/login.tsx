@@ -54,7 +54,7 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <View style={styles.content}>
-                <Text style={styles.title}>Welcome to Checklist.AI</Text>
+                <Text style={styles.title}>Checklist.AI</Text>
                 <Text style={styles.subtitle}>Enter your phone number to continue</Text>
 
                 <View style={styles.inputContainer}>

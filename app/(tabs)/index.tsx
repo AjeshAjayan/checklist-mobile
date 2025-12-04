@@ -102,7 +102,7 @@ export default function GenerateChecklistScreen() {
         setChecklist(null);
     };
 
-    const toggleItem = (sectionIndex: number, itemIndex: number) => {
+    const toggleItem = async (sectionIndex: number, itemIndex: number) => {
         if (!checklist) return;
         const newChecklist = checklist.map((section, sIdx) => {
             if (sIdx === sectionIndex) {
@@ -119,6 +119,16 @@ export default function GenerateChecklistScreen() {
             return section;
         });
         setChecklist(newChecklist);
+
+        // Auto-save the checklist after toggling
+        if (prompt.trim()) {
+            try {
+                await saveChecklist(prompt.trim(), newChecklist);
+            } catch (error) {
+                console.error('Auto-save failed:', error);
+                // Silently fail - user can still manually save
+            }
+        }
     };
 
     return (
@@ -198,21 +208,6 @@ export default function GenerateChecklistScreen() {
                                 ))}
                             </View>
                         ))}
-
-                        <TouchableOpacity
-                            style={[styles.saveButton, saving && styles.buttonDisabled]}
-                            onPress={handleSave}
-                            disabled={saving}
-                        >
-                            {saving ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <>
-                                    <Ionicons name="bookmark" size={20} color="#fff" style={styles.buttonIcon} />
-                                    <Text style={styles.saveButtonText}>Save Checklist</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
                     </View>
                 )}
             </ScrollView>
