@@ -148,6 +148,7 @@ export default function GenerateChecklistScreen() {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g., Vacation to Goa"
+                        placeholderTextColor="#999"
                         value={prompt}
                         onChangeText={setPrompt}
                         editable={!loading}

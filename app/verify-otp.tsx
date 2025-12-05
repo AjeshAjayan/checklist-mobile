@@ -83,6 +83,7 @@ export default function VerifyOTPScreen() {
                     <TextInput
                         style={styles.input}
                         placeholder="Enter 4-digit OTP"
+                        placeholderTextColor="#999"
                         keyboardType="number-pad"
                         maxLength={4}
                         value={otp}

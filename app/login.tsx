@@ -62,6 +62,7 @@ export default function LoginScreen() {
                     <TextInput
                         style={styles.input}
                         placeholder="Enter 10-digit phone number"
+                        placeholderTextColor="#999"
                         keyboardType="phone-pad"
                         maxLength={10}
                         value={phoneNumber}
