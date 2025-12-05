@@ -22,6 +22,7 @@ export default function GenerateChecklistScreen() {
     const [loading, setLoading] = useState(false);
     const [checklist, setChecklist] = useState<ChecklistItem[] | null>(null);
     const [saving, setSaving] = useState(false);
+    const [isSavedChecklist, setIsSavedChecklist] = useState(false);
 
     const abortControllerRef = useRef<AbortController | null>(null);
     const params = useLocalSearchParams();
@@ -32,6 +33,7 @@ export default function GenerateChecklistScreen() {
                 const savedChecklist = JSON.parse(params.checklistData as string);
                 setPrompt(savedChecklist.title);
                 setChecklist(savedChecklist.data);
+                setIsSavedChecklist(true); // Mark as saved when loading from storage
             } catch (error) {
                 console.error('Error parsing checklist data:', error);
             }
@@ -59,6 +61,7 @@ export default function GenerateChecklistScreen() {
 
             const response = await generateChecklist(prompt.trim(), token, abortControllerRef.current.signal);
             setChecklist(response.checklist);
+            setIsSavedChecklist(false); // Mark as unsaved when generating new checklist
         } catch (error: any) {
             // Don't show error if request was aborted
             if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
@@ -89,6 +92,7 @@ export default function GenerateChecklistScreen() {
         setSaving(true);
         try {
             await saveChecklist(prompt.trim(), checklist);
+            setIsSavedChecklist(true); // Mark as saved after successful save
             Alert.alert('Success', 'Checklist saved successfully!');
         } catch (error) {
             Alert.alert('Save Failed', 'Failed to save checklist. Please try again.');
@@ -100,6 +104,7 @@ export default function GenerateChecklistScreen() {
     const handleReset = () => {
         setPrompt('');
         setChecklist(null);
+        setIsSavedChecklist(false);
     };
 
     const toggleItem = async (sectionIndex: number, itemIndex: number) => {
@@ -208,6 +213,23 @@ export default function GenerateChecklistScreen() {
                                 ))}
                             </View>
                         ))}
+
+                        {!isSavedChecklist && (
+                            <TouchableOpacity
+                                style={[styles.saveButton, saving && styles.buttonDisabled]}
+                                onPress={handleSave}
+                                disabled={saving}
+                            >
+                                {saving ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="bookmark" size={20} color="#fff" style={styles.buttonIcon} />
+                                        <Text style={styles.saveButtonText}>Save Checklist</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
             </ScrollView>
